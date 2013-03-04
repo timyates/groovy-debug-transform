@@ -1,0 +1,56 @@
+apply plugin: 'groovy'
+apply plugin: 'codenarc'
+
+sourceCompatibility=1.6
+targetCompatibility=1.6
+
+group = 'com.bloidonia'
+version = '0.1'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile     'org.codehaus.groovy:groovy-all:2.1.1'
+  testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+}
+
+compileGroovy.options.compilerArgs << "-Xlint:unchecked"
+
+codenarcMain {
+  configFile = file( 'config/codenarc/rules.groovy' )
+}
+codenarcTest {
+  configFile = file( 'config/codenarc/rules.groovy' )
+}
+
+groovydoc {
+  docTitle = "Groovy Debug: An AST Experiment"
+  header = docTitle
+  footer = ''
+  windowTitle = docTitle
+  use = true
+  link( 'http://download.oracle.com/javase/6/docs/api/', 'java.' )
+  link('http://groovy.codehaus.org/api/',  'groovy.', 'org.codehaus.groovy.')
+}
+
+test.dependsOn( jar )
+groovydoc {
+  use             = true
+  destinationDir  = new File( "${project.buildDir.path}/groovydoc", project.version )
+  header = '<a href="https://github.com/timyates/groovy-debug-transform">groovy-debug-transform</a>'
+  footer = null
+
+  link 'http://download.oracle.com/javase/6/docs/api/',                 'java.'
+  link 'http://groovy.codehaus.org/api/',                               'groovy.', 'org.codehaus.groovy.'
+}
+
+task groovydocJar(type: Jar, dependsOn: groovydoc) {
+  classifier 'javadoc'
+  from groovydoc.destinationDir
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '1.4'
+}
