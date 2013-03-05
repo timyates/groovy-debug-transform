@@ -16,25 +16,38 @@
  */
 package com.bloidonia.groovy.ast.debug
 
-import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.AnnotationNode
-import org.codehaus.groovy.ast.MethodNode
-import org.codehaus.groovy.ast.builder.AstBuilder
-import org.codehaus.groovy.ast.stmt.BlockStatement
-import org.codehaus.groovy.control.CompilePhase
-import org.codehaus.groovy.control.SourceUnit
-import org.codehaus.groovy.control.messages.Message
-import org.codehaus.groovy.control.messages.SyntaxErrorMessage
-import org.codehaus.groovy.syntax.SyntaxException
-import org.codehaus.groovy.transform.ASTTransformation
-import org.codehaus.groovy.transform.GroovyASTTransformation
-import org.codehaus.groovy.ast.stmt.ExpressionStatement
-import org.codehaus.groovy.ast.expr.ConstructorCallExpression
+import org.codehaus.groovy.ast.ASTNode
 import org.codehaus.groovy.ast.ConstructorNode
-import org.codehaus.groovy.classgen.ReturnAdder
-import org.codehaus.groovy.ast.stmt.Statement
+import org.codehaus.groovy.ast.MethodNode
+
+import org.codehaus.groovy.ast.builder.AstBuilder
+
+import org.codehaus.groovy.ast.expr.BinaryExpression
+import org.codehaus.groovy.ast.expr.BooleanExpression
+import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.expr.ConstructorCallExpression
+import org.codehaus.groovy.ast.expr.Expression
+import org.codehaus.groovy.ast.expr.VariableExpression
+
+import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.ast.stmt.IfStatement
 import org.codehaus.groovy.ast.stmt.ReturnStatement
+import org.codehaus.groovy.ast.stmt.Statement
+
+import org.codehaus.groovy.classgen.ReturnAdder
+
+import org.codehaus.groovy.control.CompilePhase
+import org.codehaus.groovy.control.SourceUnit
+
+import org.codehaus.groovy.control.messages.Message
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage
+
+import org.codehaus.groovy.syntax.SyntaxException
+
+import org.codehaus.groovy.transform.ASTTransformation
+import org.codehaus.groovy.transform.GroovyASTTransformation
 
 @GroovyASTTransformation( phase = CompilePhase.SEMANTIC_ANALYSIS )
 class DebugTransformation implements ASTTransformation {
@@ -69,12 +82,27 @@ class DebugTransformation implements ASTTransformation {
     "$num".padLeft( 3, '0')
   }
 
+  private List<String> collectExpressionVars( Expression e ) {
+    switch( e ) {
+      case BinaryExpression:
+        return [e.leftExpression,e.rightExpression].collect { collectExpressionVars( it ) }.flatten().unique()
+      case BooleanExpression:
+        return collectExpressionVars( e.expression )
+      case ConstantExpression:
+        return []
+      case VariableExpression:
+        return [ e.name ]
+      default:
+        return [ e.getClass().name ]
+    }
+  }
+
   private String decorate( Statement stmt ) {
     switch( stmt ) {
       case ExpressionStatement:
         return "println '${new Date()} (line ${pad( stmt.lineNumber )}) EXPRESSION: $stmt.expression.text'"
       case IfStatement:
-        return "println '${new Date()} (line ${pad( stmt.lineNumber )}) IF        : $stmt.booleanExpression.text'"
+        return "println \"${new Date()} (line ${pad( stmt.lineNumber )}) IF        : $stmt.booleanExpression.text where ${collectExpressionVars( stmt.booleanExpression ).collect { it + ' = $' + it }.join(', ')}\""
       case ReturnStatement:
         return "println '${new Date()} (line ${pad( stmt.lineNumber )}) RETURN    : $stmt.expression.text'"
       default:
