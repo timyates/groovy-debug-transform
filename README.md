@@ -26,6 +26,16 @@ When it is executed, it prints out:
 
 Obviously, this can be improved, but this is a work in progress...
 
+### To run yourself:
+
+    ./gradlew jar
+    $ groovy -cp .:build/libs/groovy-debug-transform-0.1.jar Test.groovy
+    Tue Mar 05 14:12:37 GMT 2013 (line 006) EXPRESSION: (a = 2)
+    Tue Mar 05 14:12:37 GMT 2013 (line 007) EXPRESSION: (b = tim)
+    Tue Mar 05 14:12:37 GMT 2013 (line 008) IF        : ((a == 3) || (b <=> tim)) where a = 2, b = tim
+    Tue Mar 05 14:12:37 GMT 2013 (line 013) RETURN    : 2
+    2
+
 ## Todo
 
 - Handle more constructs
